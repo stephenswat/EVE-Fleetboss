@@ -290,7 +290,7 @@ class Fleet(object):
 
         res = []
 
-        if self.commander is None:
+        if self.commander is None and len(self) > 1:
             res.append(('warning', 'The fleet has no commander.'))
 
         for wing in self:
