@@ -5,9 +5,6 @@ from . import views
 
 
 fleetpatterns = [
-    url(r'^raw/wings/$', views.fleet_json_wings),
-    url(r'^raw/members/$', views.fleet_json_members),
-    url(r'^raw/$', views.fleet_json),
     url(r'^settings/$', views.fleet_settings),
     url(r'^$', views.fleet),
 ]
