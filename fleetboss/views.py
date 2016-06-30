@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from fleetboss.models import Fleet, FleetAccess
 from social.apps.django_app.default.models import UserSocialAuth
+import requests
 
 
 def home(request):
@@ -29,12 +30,54 @@ def fleet_settings(request, fleet_id):
         obj.access.add(user)
         return HttpResponse(user.get_full_name(), status=200)
 
+    if 'link_join' in request.POST:
+        obj.link_join = request.POST['link_join'] == 'true'
+        obj.save()
+        return HttpResponse(status=200)
+
     if 'remove_viewer' in request.POST:
         user = get_object_or_404(UserSocialAuth, uid=request.POST['remove_viewer']).user
         obj.access.remove(user)
         return HttpResponse(status=200)
 
     return HttpResponse(status=404)
+
+
+@login_required
+def join(request, fleet_id, key):
+    fleet_id = int(fleet_id)
+    try:
+        obj = FleetAccess.objects.get(id=fleet_id, link_join=True, secret=key)
+    except FleetAccess.DoesNotExist:
+        messages.error(request, "The given key was not valid for the fleet.")
+        return redirect(home)
+
+    result = requests.post(
+        'https://crest-tq.eveonline.com/fleets/%d/members/' % fleet_id,
+        headers={
+            'Authorization': 'Bearer ' + obj.owner.access_token,
+            'Content-Type': 'application/json'
+        },
+        json={
+            "character": {
+                "href": "https://crest-tq.eveonline.com/characters/%d/" %
+                request.user.character_id
+            },
+            "role": "squadMember"
+        }
+    )
+
+    print(result.status_code)
+
+    if result.status_code != 201:
+        if result.json()['key'] == 'FleetCandidateOffline':
+            messages.error(request, "You should log in first, dummy.")
+        else:
+            messages.error(request, "An invite could not be sent to %s." % request.user.get_full_name())
+    else:
+        messages.success(request, "An invite was successfully sent to %s." % request.user.get_full_name())
+
+    return redirect(home)
 
 
 @login_required

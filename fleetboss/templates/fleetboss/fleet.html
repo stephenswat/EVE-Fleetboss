@@ -170,7 +170,6 @@ Contains {{ fleet.member_count }} nerds. Free movement is {{ fleet.is_freemove|y
 <h2><a data-toggle="collapse" href="#collapse-settings">Fleet settings</a></h2>
 
 <div id="collapse-settings" class="in">
-    These settings do not affect the in-game fleet currently but impact the visibility of the fleet to others.
     <h3>Fleet-wide access</h3>
     <div class="checkbox">
     <fieldset>
@@ -192,6 +191,19 @@ Contains {{ fleet.member_count }} nerds. Free movement is {{ fleet.is_freemove|y
     <fieldset class="form-inline" style="margin-bottom: 20px;">
         <input id="add_viewer_name" autocomplete="off" placeholder="Character ID" type="text" class="form-control"><button id="add_viewer" type="submit" class="btn btn-primary">Add</button>
     </fieldset>
+    <h3>Join by link</h3>
+    <div class="checkbox">
+    <fieldset>
+        <label>
+            <input id="link_join" autocomplete="off" type="checkbox" {% if token.link_join %}checked{% endif %}> Allow players to join via link
+        </label>
+        <a href="{% url 'join_fleet' fleet_id=fleet.id key=token.secret %}">
+            <code>{{ request.META.HTTP_HOST }}{% url 'join_fleet' fleet_id=fleet.id key=token.secret %}</code>
+        </a>
+
+
+    </fieldset>
+    </div>
 </div>
 
 <script type="text/javascript">
@@ -200,6 +212,21 @@ $("#fleet_share").change(function() {
         url: "settings/",
         type: "post",
         data: {'allow_fleet': $("#fleet_share").prop('checked')},
+        cache: false,
+        success: function(data) {
+            toastr['success']('Fleet settings saved successfully.');
+        },
+        error: function(_, _, _) {
+            toastr['error']('Something went wrong saving the fleet settings.');
+        },
+    });
+});
+
+$("#link_join").change(function() {
+    $.ajax({
+        url: "settings/",
+        type: "post",
+        data: {'link_join': $("#link_join").prop('checked')},
         cache: false,
         success: function(data) {
             toastr['success']('Fleet settings saved successfully.');

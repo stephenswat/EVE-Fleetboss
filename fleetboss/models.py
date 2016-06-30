@@ -1,3 +1,5 @@
+import random
+import string
 from datetime import datetime, timedelta
 from collections import Counter
 from django.db import models
@@ -6,6 +8,11 @@ from django.contrib.auth.models import AbstractUser
 from social.apps.django_app.utils import load_strategy
 from fleetboss import settings, ships
 import requests
+
+
+def get_key():
+    return ''.join(random.choice(string.ascii_letters + string.digits)
+                   for _ in range(24))
 
 
 class Character(AbstractUser):
@@ -61,11 +68,14 @@ class FleetAccess(models.Model):
     """
 
     id = models.IntegerField(primary_key=True)
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
-                              related_name='fleets_owned')
-    access = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True,
-                                    related_name='fleets_accessible')
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, db_index=True,
+        related_name='fleets_owned')
+    access = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, blank=True, related_name='fleets_accessible')
     fleet_access = models.BooleanField(default=False)
+    link_join = models.BooleanField(default=False)
+    secret = models.CharField(max_length=24, default=get_key, db_index=True)
 
 
 class FleetMember(object):

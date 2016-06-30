@@ -6,6 +6,7 @@ from . import views
 
 fleetpatterns = [
     url(r'^settings/$', views.fleet_settings),
+    url(r'^join/(?P<key>[A-Za-z0-9]{24})/$', views.join, name='join_fleet'),
     url(r'^$', views.fleet),
 ]
 
