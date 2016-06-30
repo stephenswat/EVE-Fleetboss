@@ -1,0 +1,28 @@
+{% extends "fleetboss/base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+
+<h1>Fleetboss</h1>
+
+Fleetboss is cool
+
+<h2>How it works</h2>
+
+<ol>
+<li>Somehow work your way up to fleet boss of a fleet.</li>
+<li>Log into this site.</li>
+<li>In the hamburger menu of the fleet window, get the external fleet URL.</li>
+<li>Enter the external URL into the site.</li>
+<li>Enjoy! Optinally share the page with your friends and fleet members.</li>
+</ol>
+
+<h2>Try it yourself</h2>
+
+<form role="form" action="/fleet/" method="GET">
+    <div class="form-group">
+        <label for="url">External URL:</label>
+        <input name="url" class="form-control" placeholder="Enter external URL">
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
+{% endblock %}

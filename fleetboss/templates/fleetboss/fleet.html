@@ -1,0 +1,248 @@
+{% extends "fleetboss/base.html" %}
+{% block title %}Fleet {{ fleet.id }}{% endblock %}
+{% block content %}
+<script type="text/javascript">
+    google.charts.load("current", {packages:["corechart"]});
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        var data_ships = google.visualization.arrayToDataTable([
+            ['Ship', 'Count'],
+            {% for key, value in fleet.composition_class.items %}
+            ['{{ key }}', {{ value }}],
+            {% endfor %}
+        ]);
+
+        var data_category = google.visualization.arrayToDataTable([
+            ['Category', 'Count'],
+            {% for key, value in fleet.composition_category.items %}
+            ['{{ key }}', {{ value }}],
+            {% endfor %}
+        ]);
+
+        var data_size = google.visualization.arrayToDataTable([
+            ['Size', 'Count'],
+            {% for key, value in fleet.composition_size.items %}
+            ['{{ key }}', {{ value }}],
+            {% endfor %}
+        ]);
+
+        var data_location = google.visualization.arrayToDataTable([
+            ['Solar system', 'Count'],
+            {% for key, value in fleet.location_system.items %}
+            ['{{ key }}', {{ value }}],
+            {% endfor %}
+        ]);
+
+        var data_docked = google.visualization.arrayToDataTable([
+            ['Status', 'Count'],
+            {% for key, value in fleet.location_docked.items %}
+            ['{{ key }}', {{ value }}],
+            {% endfor %}
+        ]);
+
+        data_ships.sort([{column: 1}]);
+        data_category.sort([{column: 1}]);
+        data_size.sort([{column: 1}]);
+        data_location.sort([{column: 1}]);
+
+        var options = {
+            legend: {position: 'none'},
+            chartArea: {'width': '96%', 'height': '90%'},
+            height: 450,
+            pieSliceText: 'label'
+        };
+
+        options['title'] = 'Ships';
+        new google.visualization.PieChart(document.getElementById('piechart_class')).draw(data_ships, options);
+        options['title'] = 'Categories';
+        new google.visualization.PieChart(document.getElementById('piechart_category')).draw(data_category, options);
+        options['title'] = 'Size classes';
+        new google.visualization.PieChart(document.getElementById('piechart_size')).draw(data_size, options);
+        options['title'] = 'Solar systems';
+        new google.visualization.PieChart(document.getElementById('piechart_location')).draw(data_location, options);
+        options['title'] = 'Docking status';
+        new google.visualization.PieChart(document.getElementById('piechart_docked')).draw(data_docked, options);
+    }
+</script>
+
+<h1>{{ fleet.boss }}'s fleet</h1>
+Contains {{ fleet.member_count }} nerds. Free movement is {{ fleet.is_freemove|yesno:'on,off' }}. A fleet advertisement is {{ fleet.is_freemove|yesno:',not' }} up.
+
+<h2><a data-toggle="collapse" href="#collapse-notifications">Notifications</a></h2>
+
+<div id="collapse-notifications" class="in">
+    <ul class="notifications">
+    {% autoescape off %}
+    {% for warning in fleet.warnings %}
+    <li class="{{ warning.0 }}">{{ warning.1 }}</li>
+    {% empty %}
+    There are currently no items that require your attention.
+    {% endfor %}
+    {% endautoescape %}
+    </ul>
+</div>
+
+<h2><a data-toggle="collapse" href="#collapse-composition">Composition</a></h2>
+
+<div id="collapse-composition" class="in">
+    <div class="row">
+        <div class="col-md-4">
+            <div id="piechart_class"></div>
+        </div>
+        <div class="col-md-4">
+            <div id="piechart_category"></div>
+        </div>
+        <div class="col-md-4">
+            <div id="piechart_size"></div>
+        </div>
+    </div>
+</div>
+
+<h2><a data-toggle="collapse" href="#collapse-location">Location</a></h2>
+
+<div id="collapse-location" class="in">
+    <div class="row">
+        <div class="col-md-4">
+            <div id="piechart_location"></div>
+        </div>
+        <div class="col-md-4">
+            <div id="piechart_docked"></div>
+        </div>
+    </div>
+</div>
+
+<h2><a data-toggle="collapse" href="#collapse-chain">Chain of command</a></h2>
+
+<div id="collapse-chain" class="in">
+<table class="chain vertical">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="4%">
+<col width="4%">
+<col width="4%">
+<col width="4%">
+<col width="4%">
+<col width="4%">
+<col width="4%">
+<col width="4%">
+<col width="4%">
+<col width="4%">
+<tr>
+    <th>Fleet</th>
+    <th>Wings</th>
+    <th>Squads</th>
+    <th colspan="10">Members</th>
+</tr>
+{% for wing in fleet.wings %}
+    {% for squad in wing %}
+        <tr {% if forloop.last %}class="alternate"{% endif %}>
+            {% if forloop.parentloop.first and forloop.first %}
+                {% if fleet.commander %}
+                <td class="fleet_commander" rowspan="{{ fleet.squad_count }}"><img src="https://image.eveonline.com/Character/{{ fleet.commander.id }}_32.jpg" title="{{ fleet.commander.name }}"> {{ fleet.commander.name }}</td>
+                {% else %}
+                <td class="fleet_commander" rowspan="{{ fleet.squad_count }}"><img src="https://image.eveonline.com/Character/0_32.jpg" title="No commander"> No commander</td>
+                {% endif %}
+            {% endif %}
+            {% if forloop.first %}
+                {% if wing.commander %}
+                <td class="wing_commander" rowspan="{{ wing|length }}"><img src="https://image.eveonline.com/Character/{{ wing.commander.id }}_32.jpg" title="{{ wing.commander.name }}"> {{ wing.name }}</td>
+                {% else %}
+                <td class="wing_commander" rowspan="{{ wing|length }}"><img src="https://image.eveonline.com/Character/0_32.jpg" title="No commander"> {{ wing.name }}</td>
+                {% endif %}
+            {% endif %}
+            {% if squad.commander %}
+            <td class="squad_commander"><img src="https://image.eveonline.com/Character/{{ squad.commander.id }}_32.jpg" title="{{ squad.commander.name }}"> {{ squad.name }}</td>
+            {% else %}
+            <td class="squad_commander"><img src="https://image.eveonline.com/Character/0_32.jpg" title="No commander"> {{ squad.name }}</td>
+            {% endif %}
+            {% for character in squad.members %}
+                <td class="squad_member"><img src="https://image.eveonline.com/Character/{{ character.id }}_32.jpg" title="{{ character.name }}"></td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+{% endfor %}
+</table>
+</div>
+
+{% if owner %}
+<h2><a data-toggle="collapse" href="#collapse-settings">Fleet settings</a></h2>
+
+<div id="collapse-settings" class="in">
+    These settings do not affect the in-game fleet currently but impact the visibility of the fleet to others.
+    <h3>Fleet-wide access</h3>
+    <div class="checkbox">
+    <fieldset>
+        <label>
+            <input id="fleet_share" autocomplete="off" type="checkbox" {% if token.fleet_access %}checked{% endif %}> All fleet members can view this overview
+        </label>
+    </fieldset>
+    </div>
+    <h3>View access</h3>
+    <div style="margin-bottom: 20px;">
+    <ul id="viewer_list">
+    {% for member in token.access.all %}
+    <li id="viewer_{{ member.character_id }}"><img src="https://image.eveonline.com/Character/{{ member.character_id }}_32.jpg"> {{ member.get_full_name }} (<a href="javascript:remove_viewer({{ member.character_id }}, '{{ member.get_full_name }}');">remove</a>)</li>
+    {% empty %}
+    <li>Nobody currently has view access to this fleet.</li>
+    {% endfor %}
+    </ul>
+    </div>
+    <fieldset class="form-inline" style="margin-bottom: 20px;">
+        <input id="add_viewer_name" autocomplete="off" placeholder="Character ID" type="text" class="form-control"><button id="add_viewer" type="submit" class="btn btn-primary">Add</button>
+    </fieldset>
+</div>
+
+<script type="text/javascript">
+$("#fleet_share").change(function() {
+    $.ajax({
+        url: "settings/",
+        type: "post",
+        data: {'allow_fleet': $("#fleet_share").prop('checked')},
+        cache: false,
+        success: function(data) {
+            toastr['success']('Fleet settings saved successfully.');
+        },
+        error: function(_, _, _) {
+            toastr['error']('Something went wrong saving the fleet settings.');
+        },
+    });
+});
+
+$("#add_viewer").click(function() {
+    id = $("#add_viewer_name").val()
+    $("#add_viewer_name").val("")
+    $.ajax({
+        url: "settings/",
+        type: "post",
+        data: {'add_viewer': id},
+        cache: false,
+        success: function(data) {
+            toastr['success']('Gave access rights to ' + data + '.');
+            $("#viewer_list").append('<li id="viewer_' + id + '"><img src="https://image.eveonline.com/Character/' + id + '_32.jpg"> ' + data + ' (<a href="javascript:remove_viewer(' + id + ', \'' + data + '\');">remove</a>)</li>')
+        },
+        error: function(_, _, _) {
+            toastr['error']('Something went wrong saving the fleet settings.');
+        },
+    });
+});
+
+function remove_viewer(id, name) {
+    $.ajax({
+        url: "settings/",
+        type: "post",
+        data: {'remove_viewer': id},
+        cache: false,
+        success: function(data) {
+            toastr['success']('Removed access right from ' + name + '.');
+            $("#viewer_" + id).remove()
+        },
+        error: function(_, _, _) {
+            toastr['error']('Something went wrong saving the fleet settings.');
+        },
+    });
+}
+</script>
+{% endif %}
+{% endblock %}
