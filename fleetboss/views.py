@@ -12,6 +12,7 @@ from social.apps.django_app.default.models import UserSocialAuth
 def home(request):
     return render(request, 'fleetboss/home.html')
 
+
 @login_required
 @require_POST
 @csrf_exempt
@@ -34,6 +35,7 @@ def fleet_settings(request, fleet_id):
         return HttpResponse(status=200)
 
     return HttpResponse(status=404)
+
 
 @login_required
 def fleet(request, fleet_id):
@@ -67,24 +69,6 @@ def fleet(request, fleet_id):
     return render(
         request, 'fleetboss/fleet.html',
         {'fleet': fleet, 'token': obj, 'owner': obj.owner == request.user})
-
-
-@login_required
-def fleet_json_wings(request, fleet_id):
-    fleet = Fleet(int(fleet_id), request.user)
-    return JsonResponse(fleet._wings, json_dumps_params={'indent': 4}, safe=False)
-
-
-@login_required
-def fleet_json_members(request, fleet_id):
-    fleet = Fleet(int(fleet_id), request.user)
-    return JsonResponse(fleet._members, json_dumps_params={'indent': 4}, safe=False)
-
-
-@login_required
-def fleet_json(request, fleet_id):
-    fleet = Fleet(int(fleet_id), request.user)
-    return JsonResponse(fleet._overview, json_dumps_params={'indent': 4}, safe=False)
 
 
 def parse_url(request):
