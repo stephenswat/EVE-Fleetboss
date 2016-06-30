@@ -1,11 +1,10 @@
+from datetime import datetime, timedelta
+from collections import Counter
 from django.db import models
 from django.utils.functional import cached_property
 from django.contrib.auth.models import AbstractUser
 from social.apps.django_app.utils import load_strategy
 from fleetboss import settings, ships
-from datetime import datetime, timedelta
-from collections import OrderedDict, Counter
-import json
 import requests
 
 
@@ -27,7 +26,7 @@ class Character(AbstractUser):
             "%Y-%m-%dT%H:%M:%S"
         ) - datetime.now()).total_seconds()
 
-        if (difference < 10):
+        if difference < 10:
             provider.refresh_token(load_strategy())
             expiry = datetime.now() + timedelta(seconds=1200)
             provider.extra_data['expires'] = expiry.strftime("%Y-%m-%dT%H:%M:%S")
@@ -85,9 +84,6 @@ class Wing(object):
         else:
             self.squads[squad_id].add_member(character)
 
-    def add_commander(self, character):
-        self.commander = character
-
     @property
     def member_count(self):
         return sum(len(squad) for squad in self)
@@ -104,7 +100,22 @@ class Fleet(object):
         self.id = fleet_id
         self.owner = owner
         self.commander = None
-        self.__wings = None
+        self.__wings = {}
+
+        for w in self._wings:
+            self.__wings[w['id']] = Wing(**w)
+
+        for p in self._members:
+            member = FleetMember(**p['character'])
+
+            if p['wingID'] < 0:
+                self.commander = member
+                continue
+
+            if p['squadID'] < 0:
+                self.__wings[p['wingID']].commander = member
+            else:
+                self.__wings[p['wingID']].add_member(p['squadID'], member, p['roleID'] == 3)
 
     @cached_property
     def _overview(self):
@@ -175,7 +186,7 @@ class Fleet(object):
         if self.commander is None:
             res.append(('warning', 'The fleet has no commander.'))
 
-        for wing in self.wings:
+        for wing in self:
             if wing.member_count == 0:
                 continue
 
@@ -189,49 +200,17 @@ class Fleet(object):
         return res
 
     @property
-    def wings(self):
-        if self.__wings is not None:
-            return self.__wings.values()
-
-        res = {}
-
-        for w in self._wings:
-            res[w['id']] = Wing(**w)
-
-        for p in self._members:
-            member = FleetMember(**p['character'])
-
-            if p['wingID'] < 0:
-                self.commander = member
-
-            if p['squadID'] < 0:
-                res[p['wingID']].add_commander(member)
-            else:
-                res[p['wingID']].add_member(p['squadID'], member, p['roleID'] == 3)
-
-        self.__wings = res
-        return self.__wings.values()
-
-    @property
     def member_names(self):
         for p in self._members:
             yield p['character']['name']
 
     @property
     def squad_count(self):
-        return sum(len(wing) for wing in self.wings)
+        return sum(len(wing) for wing in self)
 
     @property
     def member_count(self):
         return len(self._members)
-
-    @property
-    def valid_key(self):
-        try:
-            self._overview
-            return True
-        except RuntimeError:
-            return False
 
     def __request(self, url):
         result = requests.get(
@@ -247,7 +226,7 @@ class Fleet(object):
         return result.status_code, result.json()
 
     def __iter__(self):
-        return self.wings.values().__iter__()
+        return self.__wings.values().__iter__()
 
     def __len__(self):
-        return len(self.wings)
+        return len(self.__wings)

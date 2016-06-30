@@ -51,12 +51,13 @@ def fleet(request, fleet_id):
         obj = FleetAccess(id=fleet_id, owner=request.user)
 
     for attempt in {obj.owner, request.user}:
-        fleet = Fleet(int(fleet_id), attempt)
-
-        if fleet.valid_key:
+        try:
+            fleet = Fleet(int(fleet_id), attempt)
             obj.owner = attempt
             obj.save()
             break
+        except:
+            pass
     else:
         messages.error(request, "API key was not valid for the requested fleet.")
         return redirect(home)

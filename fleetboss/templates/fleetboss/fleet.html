@@ -135,7 +135,7 @@ Contains {{ fleet.member_count }} nerds. Free movement is {{ fleet.is_freemove|y
     <th>Squads</th>
     <th colspan="10">Members</th>
 </tr>
-{% for wing in fleet.wings %}
+{% for wing in fleet %}
     {% for squad in wing %}
         <tr {% if forloop.last %}class="alternate"{% endif %}>
             {% if forloop.parentloop.first and forloop.first %}
