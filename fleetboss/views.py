@@ -1,14 +1,12 @@
+import re
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from fleetboss.models import Fleet, FleetAccess, Character
-from fleetboss import settings
+from fleetboss.models import Fleet, FleetAccess
 from social.apps.django_app.default.models import UserSocialAuth
-import json
-import re
 
 
 def home(request):

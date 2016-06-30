@@ -1,4 +1,9 @@
-categories = {
+"""
+This file provides the categories and sizes for different ships in the EVE
+Online MMORPG by CCP games. Data from EVE University.
+"""
+
+CATEGORIES = {
     'Abaddon': 'Battleship',
     'Absolution': 'Command Ship',
     'Aeon': 'Carrier',
@@ -250,7 +255,7 @@ categories = {
     'Zealot': 'Heavy Assault Cruiser'
 }
 
-sizes = {
+SIZES = {
     'Assault Frigate': 'Frigate',
     'Attack Battlecruiser': 'Battlecruiser',
     'Battlecruiser': 'Battlecruiser',
